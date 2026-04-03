@@ -6,16 +6,40 @@ public class Pion extends Piece {
     }
 
     @Override
-    public boolean estDeplacementValide(int cibleX, int cibleY, Plateau plateau) {
-        int diffX = Math.abs(cibleX - getX());
-        int diffY = cibleY - getY();
-
-        // Logique simplifiée : avance d'une case en diagonale
-        // (À compléter avec la logique de capture et de direction selon la couleur)
-        if (getCouleur().equals("Blanc")) {
-            return diffX == 1 && diffY == -1; // Monte le plateau
-        } else {
-            return diffX == 1 && diffY == 1;  // Descend le plateau
+    public boolean estDeplacementSimpleValide(int cibleX, int cibleY, Plateau plateau) {
+        if (!plateau.estDansLimites(cibleX, cibleY) || plateau.getCase(cibleX, cibleY).estOccupee()) {
+            return false;
         }
+
+        int diffX = cibleX - getX();
+        int diffY = cibleY - getY();
+        int direction = estBlanche() ? -1 : 1;
+
+        return Math.abs(diffX) == 1 && diffY == direction;
+    }
+
+    @Override
+    public boolean estCaptureValide(int cibleX, int cibleY, Plateau plateau) {
+        if (!plateau.estDansLimites(cibleX, cibleY) || plateau.getCase(cibleX, cibleY).estOccupee()) {
+            return false;
+        }
+
+        int diffX = cibleX - getX();
+        int diffY = cibleY - getY();
+        if (Math.abs(diffX) != 2 || Math.abs(diffY) != 2) {
+            return false;
+        }
+
+        int milieuX = getX() + diffX / 2;
+        int milieuY = getY() + diffY / 2;
+        Case caseMilieu = plateau.getCase(milieuX, milieuY);
+        return caseMilieu != null
+            && caseMilieu.estOccupee()
+            && !caseMilieu.getPiece().getCouleur().equals(getCouleur());
+    }
+
+    @Override
+    public String getSymbole() {
+        return estBlanche() ? "b" : "n";
     }
 }

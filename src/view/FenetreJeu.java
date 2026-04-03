@@ -1,44 +1,194 @@
 package view;
 
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.layout.GridPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-import javafx.stage.Stage;
+import model.Case;
+import model.Jeu;
+import model.Piece;
+import model.Plateau;
 
-public class FenetreJeu extends Application {
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 
-    private final int TAILLE_CASE = 60; // Taille en pixels d'une case
-    private final int NB_CASES = 10;
+public class FenetreJeu extends JFrame implements InterfaceGraphique {
+    private static final Color CASE_CLAIRE = new Color(240, 217, 181);
+    private static final Color CASE_SOMBRE = new Color(181, 136, 99);
+
+    private final BoutonCase[][] boutons;
+    private final JLabel statut;
+    private Jeu jeu;
+    private int selectionX = -1;
+    private int selectionY = -1;
+
+    public FenetreJeu() {
+        super("Jeu de Dames");
+        boutons = new BoutonCase[Plateau.TAILLE][Plateau.TAILLE];
+        statut = new JLabel("Initialisation...", SwingConstants.CENTER);
+        initialiserFenetre();
+    }
 
     @Override
-    public void start(Stage primaryStage) {
-        GridPane root = new GridPane();
+    public void afficher(Jeu jeu) {
+        this.jeu = jeu;
+        rafraichirPlateau();
+        statut.setText(jeu.getMessageEtat());
+        setVisible(true);
+    }
 
-        // Création du damier
-        for (int row = 0; row < NB_CASES; row++) {
-            for (int col = 0; col < NB_CASES; col++) {
-                Rectangle caseGraphique = new Rectangle(TAILLE_CASE, TAILLE_CASE);
+    private void initialiserFenetre() {
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
 
-                // Alternance des couleurs (marron clair / marron foncé)
-                if ((row + col) % 2 == 0) {
-                    caseGraphique.setFill(Color.BEIGE);
-                } else {
-                    caseGraphique.setFill(Color.SADDLEBROWN);
-                }
+        JPanel plateauPanel = new JPanel(new GridLayout(Plateau.TAILLE, Plateau.TAILLE));
+        JButton boutonAbandonner = new JButton("Abandonner");
+        boutonAbandonner.setFocusPainted(false);
+        boutonAbandonner.setBackground(new Color(178, 34, 34));
+        boutonAbandonner.setForeground(Color.WHITE);
+        boutonAbandonner.addActionListener(e -> abandonnerPartie());
 
-                root.add(caseGraphique, col, row);
+        JPanel barreInferieure = new JPanel(new BorderLayout(8, 0));
+        barreInferieure.add(statut, BorderLayout.CENTER);
+        barreInferieure.add(boutonAbandonner, BorderLayout.EAST);
+
+        for (int y = 0; y < Plateau.TAILLE; y++) {
+            for (int x = 0; x < Plateau.TAILLE; x++) {
+                BoutonCase bouton = new BoutonCase();
+                bouton.setPreferredSize(new Dimension(64, 64));
+                final int caseX = x;
+                final int caseY = y;
+                bouton.addActionListener(e -> gererClic(caseX, caseY));
+                boutons[x][y] = bouton;
+                plateauPanel.add(bouton);
             }
         }
 
-        Scene scene = new Scene(root, NB_CASES * TAILLE_CASE, NB_CASES * TAILLE_CASE);
-        primaryStage.setTitle("Projet Dames - JavaFX");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        add(plateauPanel, BorderLayout.CENTER);
+        add(barreInferieure, BorderLayout.SOUTH);
+        pack();
+        setLocationRelativeTo(null);
     }
 
-    public static void lancer() {
-        launch();
+    private void gererClic(int x, int y) {
+        if (jeu == null || jeu.estPartieTerminee()) {
+            return;
+        }
+
+        if (selectionX == -1) {
+            if (!jeu.peutSelectionnerPiece(x, y)) {
+                statut.setText(jeu.doitContinuerCapture()
+                    ? "Vous devez continuer avec la piece selectionnee."
+                    : "Selectionnez une de vos pieces jouables.");
+                return;
+            }
+
+            selectionX = x;
+            selectionY = y;
+            statut.setText("Selection : (" + x + ", " + y + "). Choisissez la destination.");
+            rafraichirPlateau();
+            return;
+        }
+
+        if (selectionX == x && selectionY == y && !jeu.doitContinuerCapture()) {
+            selectionX = -1;
+            selectionY = -1;
+            statut.setText(jeu.getMessageEtat());
+            rafraichirPlateau();
+            return;
+        }
+
+        if (!jeu.doitContinuerCapture() && jeu.peutSelectionnerPiece(x, y)) {
+            selectionX = x;
+            selectionY = y;
+            statut.setText("Selection : (" + x + ", " + y + "). Choisissez la destination.");
+            rafraichirPlateau();
+            return;
+        }
+
+        boolean succes = jeu.jouerTour(selectionX, selectionY, x, y);
+        if (succes) {
+            if (jeu.doitContinuerCapture()) {
+                selectionX = jeu.getXPieceObligatoire();
+                selectionY = jeu.getYPieceObligatoire();
+            } else {
+                selectionX = -1;
+                selectionY = -1;
+            }
+        }
+        rafraichirPlateau();
+        statut.setText(jeu.getMessageEtat());
+
+        if (succes && jeu.estPartieTerminee() && jeu.getGagnant() != null) {
+            JOptionPane.showMessageDialog(this, "Victoire de " + jeu.getGagnant().getNom() + " !");
+            retournerAuMenu();
+        }
+    }
+
+    private void rafraichirPlateau() {
+        if (jeu == null) {
+            return;
+        }
+
+        Plateau plateau = jeu.getPlateau();
+        for (int y = 0; y < Plateau.TAILLE; y++) {
+            for (int x = 0; x < Plateau.TAILLE; x++) {
+                BoutonCase bouton = boutons[x][y];
+                Case caseCourante = plateau.getCase(x, y);
+                bouton.mettreAJour(
+                    caseCourante.getPiece(),
+                    couleurCase(x, y),
+                    selectionX == x && selectionY == y,
+                    jeu.pieceDoitCapturer(x, y)
+                );
+            }
+        }
+    }
+
+    private Color couleurCase(int x, int y) {
+        return (x + y) % 2 == 0 ? CASE_CLAIRE : CASE_SOMBRE;
+    }
+
+    private void abandonnerPartie() {
+        if (jeu == null || jeu.estPartieTerminee()) {
+            return;
+        }
+
+        int confirmation = JOptionPane.showConfirmDialog(
+            this,
+            jeu.getJoueurCourant().getNom() + ", voulez-vous vraiment abandonner ?",
+            "Confirmer l'abandon",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirmation != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        String vainqueur = Piece.BLANC.equals(jeu.getJoueurCourant().getCouleur())
+            ? jeu.getNomJoueurNoir()
+            : jeu.getNomJoueurBlanc();
+
+        JOptionPane.showMessageDialog(
+            this,
+            jeu.getJoueurCourant().getNom() + " abandonne la partie.\nVictoire de " + vainqueur + " !"
+        );
+        retournerAuMenu();
+    }
+
+    private void retournerAuMenu() {
+        String nomJoueurBlanc = jeu.getNomJoueurBlanc();
+        String nomJoueurNoir = jeu.getNomJoueurNoir();
+        dispose();
+        FenetreMenu.lancer(nomJoueurBlanc, nomJoueurNoir);
+    }
+
+    public static void lancer(Jeu jeu) {
+        SwingUtilities.invokeLater(() -> new FenetreJeu().afficher(jeu));
     }
 }
