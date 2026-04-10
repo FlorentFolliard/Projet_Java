@@ -2,9 +2,8 @@
 
 ## 👥 Présentation de l'équipe
 Ce projet a été réalisé dans le cadre du module de Programmation Orientée Objet par :
-*   **[NOM Prénom 1]** - Groupe [A/B]
-*   **[NOM Prénom 2]** - Groupe [A/B]
-*   **[NOM Prénom 3]** - Groupe [A/B]
+*   **Oscar**
+*   **Florent**
 
 ## 📝 Description du Projet
 Développement d'une application de **Jeu de Dames classique** (variante 10x10) entièrement codée en Java. L'application permet à deux joueurs de s'affronter sur le même ordinateur via une interface graphique fluide. 
@@ -58,7 +57,12 @@ Le projet est structuré autour des classes suivantes :
     ```
 
 ## 📸 Aperçu
-!Capture d'écran de l'interface
-*(Remplacez ce lien par une capture d'écran réelle de votre interface finale)*
+Voici quelques captures d'écran de l'application :
+
+![Menu du jeu](Menu_img.png)
+
+![Plateau de jeu](Game_img.png)
+
+![Interface finale](FF_img.png)
 
 ---
