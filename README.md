@@ -1,14 +1,20 @@
-# Jeu de Dames - Projet Java POO
+# Checkers-Lite by LitePlay - Projet Java POO
 
 ## 👥 Présentation de l'équipe
 Ce projet a été réalisé dans le cadre du module de Programmation Orientée Objet par :
-*   **Oscar**
-*   **Florent**
+*   **Oscar** (developpement du modèle & GUI)
+*   **Florent** (développement du modèle et documentation)
 
 ## 📝 Description du Projet
 Développement d'une application de **Jeu de Dames classique** (variante 10x10) entièrement codée en Java. L'application permet à deux joueurs de s'affronter sur le même ordinateur via une interface graphique fluide. 
 
 Le projet respecte l'architecture **MVC (Modèle-Vue-Contrôleur)** pour séparer la logique métier (calcul des coups, règles) de l'affichage visuel.
+
+## 🏢 Contexte marketing
+Dans un monde où le divertissement dépend de plus en plus du Cloud, nous avons développé un moteur de jeu de dames robuste et autonome. Conçu pour être intégré dans des systèmes embarqués ou des environnements à connectivité limitée, notre solution mise sur la sobriété technique et la fluidité de l'expérience utilisateur locale. 
+Aucune donnée collectée, légèreté garantie. Ce sont les valeurs de notre entreprise LitePlay.
+
+
 
 ### Fonctionnalités principales :
 *   **Règles officielles :** Déplacements diagonaux, captures obligatoires, rafles (captures multiples) et promotion des pions en Dames.
